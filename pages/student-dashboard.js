@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import LessonCard from '../components/LessonCard';
 import ProjectCard from '../components/ProjectCard';
@@ -15,32 +15,37 @@ export default function StudentDashboard() {
       try {
         setLoading(true);
         
-        // Fetch from your live Strapi backend
-        const strapiUrl = process.env.NEXT_PUBLIC_STRAPI_URL || 'https://cbchub.kuberns.app';
+        // Direct fetch to Sanity (temporary fix)
+        const projectId = 'oiauqspg';
+        const dataset = 'production';
+        const apiVersion = '2024-03-02';
         
-        const [lessonsRes, projectsRes] = await Promise.all([
-          fetch(`${strapiUrl}/api/lessons?populate=*`),
-          fetch(`${strapiUrl}/api/diy-projects?populate=*`)
-        ]);
-
-        const lessonsData = await lessonsRes.json();
+        // Fetch DIY projects
+        const projectsUrl = `https://${projectId}.api.sanity.io/v${apiVersion}/data/query/${dataset}?query=*[_type=='diyProject'] | order(title asc)`;
+        const projectsRes = await fetch(projectsUrl);
         const projectsData = await projectsRes.json();
-
-        setLessons(lessonsData.data || []);
-        setProjects(projectsData.data || []);
-        setError(null);
+        
+        // Fetch lessons
+        const lessonsUrl = `https://${projectId}.api.sanity.io/v${apiVersion}/data/query/${dataset}?query=*[_type=='lesson'] | order(title asc)`;
+        const lessonsRes = await fetch(lessonsUrl);
+        const lessonsData = await lessonsRes.json();
+        
+        console.log('Projects:', projectsData.result);
+        console.log('Lessons:', lessonsData.result);
+        
+        setProjects(projectsData.result || []);
+        setLessons(lessonsData.result || []);
+        
       } catch (err) {
-        console.error('Failed to fetch data:', err);
-        setError('Failed to load content. Please try again later.');
+        console.error('Error:', err);
+        setError(err.message);
       } finally {
         setLoading(false);
       }
     }
-
+    
     fetchData();
   }, []);
-
-  const progress = 65; // Example progress
 
   if (loading) {
     return (
@@ -57,10 +62,10 @@ export default function StudentDashboard() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-red-600">{error}</p>
+          <p className="text-red-600 mb-4">Error: {error}</p>
           <button 
             onClick={() => window.location.reload()} 
-            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
           >
             Try Again
           </button>
@@ -78,53 +83,49 @@ export default function StudentDashboard() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-8">My Learning Dashboard</h1>
         
-        {/* Progress Overview */}
         <div className="bg-white rounded-lg shadow-md p-6 mb-8">
           <h2 className="text-xl font-semibold mb-4">My Progress</h2>
-          <ProgressBar value={progress} max={100} />
+          <ProgressBar value={65} max={100} />
         </div>
 
-        {/* Lessons Section */}
-        {lessons.length > 0 && (
-          <section className="mb-12">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">My Lessons</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {lessons.map((lesson) => (
-                <LessonCard 
-                  key={lesson.id}
-                  title={lesson.attributes?.title || 'Untitled'}
-                  subject={lesson.attributes?.subject || 'General'}
-                  grade={lesson.attributes?.grade || 'All Grades'}
-                  isPremium={lesson.attributes?.isPremium || false}
-                />
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* DIY Projects Section */}
-        {projects.length > 0 && (
-          <section>
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">DIY Projects</h2>
+        {/* DIY Projects Section - Show first since we know it exists */}
+        <section className="mb-12">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">DIY Projects</h2>
+          {projects.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {projects.map((project) => (
                 <ProjectCard 
-                  key={project.id}
-                  title={project.attributes?.title || 'Untitled'}
-                  difficulty={project.attributes?.difficulty || 'Medium'}
-                  estimatedTime={project.attributes?.estimatedTime || '30 mins'}
+                  key={project._id}
+                  title={project.title || 'Untitled'}
+                  difficulty={project.difficulty || 'Medium'}
+                  estimatedTime={project.estimatedTime || '30 mins'}
                 />
               ))}
             </div>
-          </section>
-        )}
+          ) : (
+            <p className="text-gray-500">No DIY projects available yet.</p>
+          )}
+        </section>
 
-        {/* Show message if no content */}
-        {lessons.length === 0 && projects.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-gray-500 text-lg">No content available yet. Check back soon!</p>
-          </div>
-        )}
+        {/* Lessons Section */}
+        <section>
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">Lessons</h2>
+          {lessons.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {lessons.map((lesson) => (
+                <LessonCard 
+                  key={lesson._id}
+                  title={lesson.title || 'Untitled'}
+                  subject={lesson.subject || 'General'}
+                  grade={lesson.grade || 'All Grades'}
+                  isPremium={lesson.isPremium || false}
+                />
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-500">No lessons available yet.</p>
+          )}
+        </section>
       </main>
     </div>
   );
