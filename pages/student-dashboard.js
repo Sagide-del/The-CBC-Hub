@@ -5,40 +5,34 @@ export default function StudentDashboard() {
   const [loading, setLoading] = useState(true);
   const [apiMessage, setApiMessage] = useState('');
 
-  // Hardcoded fallback
-  const hardcodedProjects = [
-    {
-      _id: '1',
-      title: 'Build a Recycled Robot',
-      difficulty: 'Medium',
-      estimatedTime: '60-90 minutes'
-    }
-  ];
-
   useEffect(() => {
     async function fetchData() {
       try {
-        // First test if API is working
-        const testRes = await fetch('/api/test');
-        const testData = await testRes.json();
-        console.log('Test API:', testData);
-        setApiMessage('✅ API is working');
-
-        // Then fetch from Sanity proxy
         const sanityRes = await fetch('/api/sanity-proxy');
         const sanityData = await sanityRes.json();
         console.log('Sanity data:', sanityData);
 
-        if (sanityData.success && sanityData.data?.result?.length > 0) {
-          setProjects(sanityData.data.result);
-          setApiMessage('✅ Connected to Sanity');
+        if (sanityData.success && sanityData.data?.result) {
+          // Map the Sanity data to our display format
+          const mappedProjects = sanityData.data.result.map(item => ({
+            _id: item._id,
+            title: item.title || 'Untitled Project',
+            description: item.description || '',
+            difficulty: item.difficulty || 'medium',
+            estimatedTime: item.estimatedTime || '30 mins',
+            materials: item.materials || [],
+            steps: item.steps || []
+          }));
+          
+          setProjects(mappedProjects);
+          setApiMessage(`✅ Connected to Sanity (${mappedProjects.length} project${mappedProjects.length !== 1 ? 's' : ''})`);
         } else {
-          setProjects(hardcodedProjects);
-          setApiMessage('⚠️ Using sample data (Sanity returned no data)');
+          setProjects([]);
+          setApiMessage('⚠️ No projects found in Sanity');
         }
       } catch (error) {
         console.error('Error:', error);
-        setProjects(hardcodedProjects);
+        setProjects([]);
         setApiMessage(`❌ Error: ${error.message}`);
       } finally {
         setLoading(false);
@@ -48,22 +42,37 @@ export default function StudentDashboard() {
     fetchData();
   }, []);
 
-  function ProjectCard({ title, difficulty, estimatedTime }) {
+  function ProjectCard({ project }) {
     const difficultyColors = {
-      Easy: "bg-green-100 text-green-800",
-      Medium: "bg-yellow-100 text-yellow-800",
-      Hard: "bg-red-100 text-red-800"
+      easy: "bg-green-100 text-green-800",
+      medium: "bg-yellow-100 text-yellow-800",
+      hard: "bg-red-100 text-red-800"
     };
 
     return (
       <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
-        <h3 className="text-xl font-semibold mb-2">{title}</h3>
+        <h3 className="text-xl font-semibold mb-2">{project.title}</h3>
         <p className={`inline-block text-xs px-2 py-1 rounded mb-2 ${
-          difficultyColors[difficulty] || "bg-gray-100 text-gray-800"
+          difficultyColors[project.difficulty] || "bg-gray-100 text-gray-800"
         }`}>
-          {difficulty}
+          {project.difficulty?.charAt(0).toUpperCase() + project.difficulty?.slice(1) || 'Medium'}
         </p>
-        <p className="text-gray-600">⏱️ {estimatedTime}</p>
+        <p className="text-gray-600 mb-3">⏱️ {project.estimatedTime}</p>
+        <p className="text-gray-700 text-sm line-clamp-3">{project.description}</p>
+        
+        {/* Show materials count */}
+        {project.materials?.length > 0 && (
+          <p className="text-xs text-gray-500 mt-2">
+            🧰 {project.materials.length} materials needed
+          </p>
+        )}
+        
+        {/* Show steps count */}
+        {project.steps?.length > 0 && (
+          <p className="text-xs text-gray-500">
+            📝 {project.steps.length} steps
+          </p>
+        )}
       </div>
     );
   }
@@ -103,27 +112,19 @@ export default function StudentDashboard() {
 
         <section>
           <h2 className="text-2xl font-bold text-gray-900 mb-6">DIY Projects</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {projects.map((project) => (
-              <ProjectCard 
-                key={project._id}
-                title={project.title}
-                difficulty={project.difficulty}
-                estimatedTime={project.estimatedTime}
-              />
-            ))}
-          </div>
+          
+          {projects.length === 0 ? (
+            <p className="text-gray-500 text-center py-12">No DIY projects available yet.</p>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {projects.map((project) => (
+                <ProjectCard key={project._id} project={project} />
+              ))}
+            </div>
+          )}
           
           <div className="mt-4 p-3 bg-blue-100 text-blue-800 rounded text-sm">
             Status: {apiMessage}
-          </div>
-
-          <div className="mt-2 text-xs text-gray-500">
-            <p>Debug URLs:</p>
-            <ul className="list-disc pl-5">
-              <li><a href="/api/test" target="_blank" className="text-blue-600 underline">Test API</a></li>
-              <li><a href="/api/sanity-proxy" target="_blank" className="text-blue-600 underline">Sanity Proxy</a></li>
-            </ul>
           </div>
         </section>
       </main>
