@@ -4,5 +4,6 @@ export default defineCliConfig({
   api: {
     projectId: 'oiauqspg',
     dataset: 'production'
-  }
+  },
+  studioHost: 'cbc-hub-studio'
 })

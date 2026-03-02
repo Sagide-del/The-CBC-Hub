@@ -1,5 +1,5 @@
 ﻿# dependencies
-/node_modules
+node_modules
 /.pnp
 .pnp.js
 .yarn/install-state.gz
@@ -10,34 +10,31 @@
 # next.js
 /.next/
 /out/
+/build
 
 # production
-/build
+/dist
 
 # misc
 .DS_Store
 *.pem
+.env
+.env.local
+.env.production
+.env.development
 
 # debug
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# local env files
-.env*.local
-.env
-
-# vercel
+# local vercel
 .vercel
 
 # typescript
 *.tsbuildinfo
 next-env.d.ts
 
-# large binaries
-*.node
-*.so
-*.dll
-*.dylib
-.vercel
-.env*.local
+# M-Pesa credentials (sensitive)
+lib/mpesa/credentials.js
+!lib/mpesa/config.js

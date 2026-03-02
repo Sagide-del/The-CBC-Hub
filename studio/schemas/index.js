@@ -1,4 +1,3 @@
-﻿import lesson from './lesson'
-import diyProject from './diyProject'
+﻿import diyProject from './diyProject'
 
-export const schemaTypes = [lesson, diyProject]
+export const schemaTypes = [diyProject]

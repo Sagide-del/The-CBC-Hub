@@ -10,8 +10,10 @@
   },
   "dependencies": {
     "next": "latest",
+    "puppeteer": "^24.37.5",
     "react": "latest",
-    "react-dom": "latest"
+    "react-dom": "latest",
+    "recharts": "^3.7.0"
   },
   "devDependencies": {
     "autoprefixer": "^10.4.16",
