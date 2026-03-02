@@ -1,0 +1,12 @@
+﻿{
+  "name": "the-cbc-hub-frontend",
+  "region": "Frankfurt",
+  "plan": "free",
+  "buildCommand": "npm run build",
+  "startCommand": "npm run start",
+  "environment": {
+    "NEXT_PUBLIC_STRAPI_URL": "https://cbchub.kuberns.app",
+    "NODE_ENV": "production",
+    "NODE_VERSION": "20.11.0"
+  }
+}
