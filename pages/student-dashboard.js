@@ -1,6 +1,12 @@
-﻿export default function StudentDashboard() {
-  // Hardcoded data for testing
-  const projects = [
+﻿import { useState, useEffect } from 'react';
+
+export default function StudentDashboard() {
+  const [projects, setProjects] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [usingHardcoded, setUsingHardcoded] = useState(false);
+
+  // Hardcoded fallback
+  const hardcodedProjects = [
     {
       _id: '1',
       title: 'Build a Recycled Robot',
@@ -8,6 +14,41 @@
       estimatedTime: '60-90 minutes'
     }
   ];
+
+  useEffect(() => {
+    async function fetchProjects() {
+      try {
+        // Try to fetch from Sanity
+        const response = await fetch(
+          'https://oiauqspg.api.sanity.io/v2024-03-02/data/query/production?query=*[_type=="diyProject"]'
+        );
+        
+        if (response.ok) {
+          const data = await response.json();
+          if (data.result && data.result.length > 0) {
+            setProjects(data.result);
+            setUsingHardcoded(false);
+          } else {
+            // No data in Sanity, use hardcoded
+            setProjects(hardcodedProjects);
+            setUsingHardcoded(true);
+          }
+        } else {
+          // API error, use hardcoded
+          setProjects(hardcodedProjects);
+          setUsingHardcoded(true);
+        }
+      } catch (error) {
+        console.error('Error fetching from Sanity:', error);
+        setProjects(hardcodedProjects);
+        setUsingHardcoded(true);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchProjects();
+  }, []);
 
   function ProjectCard({ title, difficulty, estimatedTime }) {
     const difficultyColors = {
@@ -41,6 +82,17 @@
     );
   }
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading your dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -63,12 +115,13 @@
               />
             ))}
           </div>
+          
+          {usingHardcoded && (
+            <div className="mt-4 p-4 bg-yellow-100 text-yellow-800 rounded">
+              ⚡ Using sample data. Waiting for Sanity connection...
+            </div>
+          )}
         </section>
-
-        {/* This shows that the page is working */}
-        <div className="mt-8 p-4 bg-green-100 text-green-800 rounded">
-          ✅ Dashboard is working! This is using hardcoded test data.
-        </div>
       </main>
     </div>
   );
