@@ -11,30 +11,31 @@ export default async function handler(req, res) {
   }
   
   try {
-    const { phone, amount, itemName, itemId } = req.body;
+    const { amount, itemName, itemId } = req.body;
     
     // Validate input
-    if (!phone || !amount) {
-      return res.status(400).json({ error: 'Phone number and amount are required' });
+    if (!amount) {
+      return res.status(400).json({ error: 'Amount is required' });
     }
     
     if (amount < 10) {
       return res.status(400).json({ error: 'Minimum amount is KSh 10' });
     }
     
-    // Initiate STK push
+    // Initiate STK push to YOUR number (0748519923)
     const result = await initiateSTKPush(
-      phone,
       amount,
       `CBC-${itemId || 'RES'}`,
       `Payment for ${itemName || 'CBC Hub resources'}`
     );
     
+    console.log('STK Push Result:', result);
+    
     // Check if successful
     if (result.ResponseCode === '0') {
       return res.status(200).json({
         success: true,
-        message: 'STK push sent. Check your phone to complete payment.',
+        message: 'STK push sent to 0748519923. Check your phone to complete payment.',
         checkoutRequestID: result.CheckoutRequestID,
         merchantRequestID: result.MerchantRequestID
       });

@@ -1,19 +1,13 @@
 ﻿import { useState } from 'react';
 
 export default function MpesaPaymentModal({ isOpen, onClose, item, onSuccess }) {
-  const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState('');
   const [checkoutRequestID, setCheckoutRequestID] = useState('');
 
   const handlePayment = async () => {
-    if (!phone || phone.length < 10) {
-      alert('Please enter a valid phone number');
-      return;
-    }
-
     setLoading(true);
-    setStatus('Initiating payment...');
+    setStatus('Initiating payment to 0748519923...');
 
     try {
       const response = await fetch('/api/mpesa/stkpush', {
@@ -22,7 +16,6 @@ export default function MpesaPaymentModal({ isOpen, onClose, item, onSuccess }) 
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          phone,
           amount: item.price,
           itemName: item.name,
           itemId: item.id
@@ -32,7 +25,7 @@ export default function MpesaPaymentModal({ isOpen, onClose, item, onSuccess }) 
       const data = await response.json();
 
       if (data.success) {
-        setStatus('✅ STK push sent! Check your phone to complete payment.');
+        setStatus('✅ STK push sent! Check phone 0748519923 to complete payment.');
         setCheckoutRequestID(data.checkoutRequestID);
         
         // Start polling for payment status
@@ -69,7 +62,7 @@ export default function MpesaPaymentModal({ isOpen, onClose, item, onSuccess }) 
           }, 2000);
         } else if (attempts >= maxAttempts) {
           clearInterval(interval);
-          setStatus('⏱️ Payment timeout. Please check your M-Pesa messages.');
+          setStatus('⏱️ Payment timeout. Please check M-Pesa messages on 0748519923.');
         }
       } catch (error) {
         console.error('Polling error:', error);
@@ -91,24 +84,12 @@ export default function MpesaPaymentModal({ isOpen, onClose, item, onSuccess }) 
           <p className="text-sm text-gray-600">Item:</p>
           <p className="font-semibold text-gray-900">{item?.name}</p>
           <p className="text-2xl font-bold text-[#1a5f7a] mt-2">KSh {item?.price}</p>
-          <p className="text-xs text-gray-500 mt-1">Till Number: <span className="font-mono">345670</span></p>
-        </div>
-
-        <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            M-Pesa Phone Number
-          </label>
-          <input
-            type="tel"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            placeholder="07XX XXX XXX"
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1a5f7a]"
-            disabled={loading}
-          />
-          <p className="text-xs text-gray-500 mt-1">
-            You'll receive an STK push on this number
-          </p>
+          <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+            <p className="text-sm font-medium text-blue-800">📱 Payment will be sent to:</p>
+            <p className="text-lg font-bold text-blue-600">0748519923</p>
+            <p className="text-xs text-blue-600 mt-1">(You will receive the STK push)</p>
+          </div>
+          <p className="text-xs text-gray-500 mt-2">Till Number: <span className="font-mono">345670</span></p>
         </div>
 
         {status && (
@@ -135,15 +116,16 @@ export default function MpesaPaymentModal({ isOpen, onClose, item, onSuccess }) 
             disabled={loading}
             className="flex-1 bg-green-600 text-white py-3 rounded-lg font-medium hover:bg-green-700 transition disabled:bg-gray-400"
           >
-            {loading ? 'Processing...' : 'Pay Now'}
+            {loading ? 'Processing...' : 'Send STK Push'}
           </button>
         </div>
 
         <div className="mt-4 text-center">
+          <p className="text-xs text-gray-500">STK push will be sent to 0748519923</p>
           <img 
             src="https://www.safaricom.co.ke/images/m-pesa/logo-mpesa.png" 
             alt="M-Pesa" 
-            className="h-8 inline-block opacity-50"
+            className="h-8 inline-block mt-2 opacity-50"
           />
         </div>
       </div>
