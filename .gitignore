@@ -39,3 +39,5 @@ next-env.d.ts
 *.so
 *.dll
 *.dylib
+.vercel
+.env*.local
