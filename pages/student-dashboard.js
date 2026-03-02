@@ -3,7 +3,7 @@
 export default function StudentDashboard() {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [usingHardcoded, setUsingHardcoded] = useState(false);
+  const [apiMessage, setApiMessage] = useState('');
 
   // Hardcoded fallback
   const hardcodedProjects = [
@@ -16,38 +16,36 @@ export default function StudentDashboard() {
   ];
 
   useEffect(() => {
-    async function fetchProjects() {
+    async function fetchData() {
       try {
-        // Try to fetch from Sanity
-        const response = await fetch(
-          'https://oiauqspg.api.sanity.io/v2024-03-02/data/query/production?query=*[_type=="diyProject"]'
-        );
-        
-        if (response.ok) {
-          const data = await response.json();
-          if (data.result && data.result.length > 0) {
-            setProjects(data.result);
-            setUsingHardcoded(false);
-          } else {
-            // No data in Sanity, use hardcoded
-            setProjects(hardcodedProjects);
-            setUsingHardcoded(true);
-          }
+        // First test if API is working
+        const testRes = await fetch('/api/test');
+        const testData = await testRes.json();
+        console.log('Test API:', testData);
+        setApiMessage('✅ API is working');
+
+        // Then fetch from Sanity proxy
+        const sanityRes = await fetch('/api/sanity-proxy');
+        const sanityData = await sanityRes.json();
+        console.log('Sanity data:', sanityData);
+
+        if (sanityData.success && sanityData.data?.result?.length > 0) {
+          setProjects(sanityData.data.result);
+          setApiMessage('✅ Connected to Sanity');
         } else {
-          // API error, use hardcoded
           setProjects(hardcodedProjects);
-          setUsingHardcoded(true);
+          setApiMessage('⚠️ Using sample data (Sanity returned no data)');
         }
       } catch (error) {
-        console.error('Error fetching from Sanity:', error);
+        console.error('Error:', error);
         setProjects(hardcodedProjects);
-        setUsingHardcoded(true);
+        setApiMessage(`❌ Error: ${error.message}`);
       } finally {
         setLoading(false);
       }
     }
 
-    fetchProjects();
+    fetchData();
   }, []);
 
   function ProjectCard({ title, difficulty, estimatedTime }) {
@@ -116,11 +114,17 @@ export default function StudentDashboard() {
             ))}
           </div>
           
-          {usingHardcoded && (
-            <div className="mt-4 p-4 bg-yellow-100 text-yellow-800 rounded">
-              ⚡ Using sample data. Waiting for Sanity connection...
-            </div>
-          )}
+          <div className="mt-4 p-3 bg-blue-100 text-blue-800 rounded text-sm">
+            Status: {apiMessage}
+          </div>
+
+          <div className="mt-2 text-xs text-gray-500">
+            <p>Debug URLs:</p>
+            <ul className="list-disc pl-5">
+              <li><a href="/api/test" target="_blank" className="text-blue-600 underline">Test API</a></li>
+              <li><a href="/api/sanity-proxy" target="_blank" className="text-blue-600 underline">Sanity Proxy</a></li>
+            </ul>
+          </div>
         </section>
       </main>
     </div>
